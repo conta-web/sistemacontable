@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Partidas Contables (NIIF - El Salvador)</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      background: #f4f5f7;
+      padding: 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+    .card {
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+      border: none;
+    }
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+    .app-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-soft {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+    }
+    .nav-pills .nav-link {
+      border-radius: 999px;
+      font-weight: 500;
+    }
+    .nav-pills .nav-link.active {
+      background: #0f172a;
+    }
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-subtitle {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+    .table thead {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .btn-sm {
+      border-radius: 999px;
+      font-size: 0.75rem;
+      padding-inline: 10px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .chip-activo {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .chip-inactivo {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- HEADER -->
+    <div class="app-header">
+      <div class="app-title">
+        📘 Sistema de Partidas Contables
+        <span class="badge-soft">NIIF + enfoque tributario El Salvador</span>
+      </div>
+      <small class="text-muted">
+        Doble partida (debe = haber). Catálogo de cuentas basado en NIIF  
+        y uso de cuentas típicas de IVA/ISR salvadoreñas. Datos en <strong>localStorage</strong>.
+      </small>
+    </div>
+
+    <!-- NAV -->
+    <ul class="nav nav-pills mb-3" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-dashboard" type="button">
+          Inicio / Resumen
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-catalogo" type="button">
+          Catálogo de cuentas
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-partidas" type="button">
+          Partidas contables
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- ========== DASHBOARD ========== -->
+      <div class="tab-pane fade show active" id="tab-dashboard">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="section-title">📚 Catálogo</div>
+                <p class="mb-1"><small>Total cuentas</small></p>
+                <div class="fs-4 fw-bold" id="dashTotalCuentas">0</div>
+                <p class="mb-1 mt-2"><small>Cuentas activas</small></p>
+                <div class="fs-6" id="dashCuentasActivas">0</div>
+                <p class="mb-1 mt-2"><small>Cuentas inactivas</small></p>
+                <div class="fs-6" id="dashCuentasInactivas">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="section-title">🧾 Partidas</div>
+                <p class="mb-1">
+                  Total de partidas registradas:
+                  <strong id="dashTotalPartidas">0</strong>
+                </p>
+                <p class="mb-1">
+                  Partidas del mes actual:
+                  <strong id="dashPartidasMes">0</strong>
+                </p>
+                <p class="mb-0 text-muted">
+                  <small>Recuerda que toda partida debe cumplir con el principio de partida doble (NIIF): debe = haber.</small>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="section-title">⚖️ Cuentas típicas tributarias</div>
+                <div class="section-subtitle">
+                  Algunas cuentas sugeridas (puedes ajustarlas en el catálogo):
+                </div>
+                <ul class="mb-0" style="font-size:0.8rem;">
+                  <li>1101 Caja</li>
+                  <li>1102 Bancos</li>
+                  <li>1131 Crédito fiscal IVA</li>
+                  <li>2131 IVA Débito fiscal / IVA por pagar</li>
+                  <li>2132 ISR por pagar</li>
+                  <li>2133 Pago a cuenta por pagar</li>
+                  <li>4101 Ventas gravadas locales</li>
+                  <li>5101 Costo de ventas</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== CATÁLOGO ========== -->
+      <div class="tab-pane fade" id="tab-catalogo">
+        <div class="row g-3">
+          <!-- FORM CUENTA -->
+          <div class="col-lg-4">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="section-title">📚 Catálogo de cuentas</div>
+                <div class="section-subtitle">
+                  Define el plan de cuentas según NIIF: Activo, Pasivo, Patrimonio, Ingresos, Gastos y Cuentas de orden.
+                </div>
+
+                <form id="formCuenta">
+                  <input type="hidden" id="ctaIndex" />
+                  <div class="mb-2">
+                    <label class="form-label">Código</label>
+                    <input type="text" id="cta_codigo" class="form-control form-control-sm" required />
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label">Nombre de la cuenta</label>
+                    <input type="text" id="cta_nombre" class="form-control form-control-sm" required />
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label">Tipo NIIF</label>
+                    <select id="cta_tipo" class="form-select form-select-sm">
+                      <option value="Activo">Activo</option>
+                      <option value="Pasivo">Pasivo</option>
+                      <option value="Patrimonio">Patrimonio</option>
+                      <option value="Ingreso">Ingreso</option>
+                      <option value="Gasto">Gasto</option>
+                      <option value="Orden">Cuenta de orden</option>
+                    </select>
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label">Descripción / Uso</label>
+                    <textarea id="cta_descripcion" rows="2" class="form-control form-control-sm"></textarea>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Estado</label>
+                    <select id="cta_estado" class="form-select form-select-sm">
+                      <option value="Activa">Activa</option>
+                      <option value="Inactiva">Inactiva</option>
+                    </select>
+                  </div>
+
+                  <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-dark btn-sm flex-grow-1">Guardar</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetFormCuenta()">
+                      Nuevo
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- LISTADO CUENTAS -->
+          <div class="col-lg-8">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="section-title">📋 Listado de cuentas</div>
+                <div class="section-subtitle">
+                  El código es libre, pero normalmente se agrupa por naturaleza (1 Activo, 2 Pasivo, 3 Patrimonio, 4 Ingresos, 5 Gastos, etc.).
+                </div>
+
+                <div class="table-responsive" style="max-height:420px;">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="tablaCuentas"></tbody>
+                  </table>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== PARTIDAS ========== -->
+      <div class="tab-pane fade" id="tab-partidas">
+        <div class="row g-3">
+          <!-- FORM PARTIDA -->
+          <div class="col-lg-5">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="section-title">🧾 Nueva partida contable</div>
+                <div class="section-subtitle">
+                  Debe ser una partida en equilibrio: la suma del <strong>Debe</strong> debe ser igual a la suma del <strong>Haber</strong>.
+                  Este criterio es básico bajo NIIF y regulación contable salvadoreña.
+                </div>
+
+                <form id="formPartida" onsubmit="guardarPartida(event)">
+                  <div class="mb-2">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" id="par_fecha" class="form-control form-control-sm" required />
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label">Descripción / Glosa</label>
+                    <textarea id="par_glosa" rows="2" class="form-control form-control-sm" required></textarea>
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label">Tipo de operación</label>
+                    <select id="par_tipo" class="form-select form-select-sm">
+                      <option value="General">General</option>
+                      <option value="Venta gravada (IVA 13%)">Venta gravada (IVA 13%)</option>
+                      <option value="Compra gravada (IVA 13%)">Compra gravada (IVA 13%)</option>
+                      <option value="Gasto con IVA (administrativo)">Gasto con IVA (administrativo)</option>
+                    </select>
+                  </div>
+
+                  <hr class="my-2">
+
+                  <div class="mb-2">
+                    <label class="form-label">Líneas de la partida</label>
+                    <div class="section-subtitle mb-1">
+                      Para usar una plantilla tributaria, indica el monto base (sin IVA) y aplica:
+                    </div>
+                    <div class="row g-2 mb-2">
+                      <div class="col-7">
+                        <input
+                          type="number"
+                          step="0.01"
+                          id="par_montoBase"
+                          class="form-control form-control-sm"
+                          placeholder="Monto base sin IVA"
+                        />
+                      </div>
+                      <div class="col-5 d-grid">
+                        <button type="button" class="btn btn-outline-dark btn-sm" onclick="aplicarPlantilla()">
+                          Aplicar plantilla
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="table-responsive" style="max-height:240px;">
+                    <table class="table table-sm align-middle">
+                      <thead>
+                        <tr>
+                          <th>Cuenta (código + nombre)</th>
+                          <th>Detalle</th>
+                          <th>Debe</th>
+                          <th>Haber</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody id="tbodyLineas"></tbody>
+                    </table>
+                  </div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="agregarLinea()">
+                      + Agregar línea
+                    </button>
+                    <div class="text-end" style="font-size:0.85rem;">
+                      Debe: <strong>$<span id="sumDebe">0.00</span></strong> |
+                      Haber: <strong>$<span id="sumHaber">0.00</span></strong>
+                    </div>
+                  </div>
+
+                  <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-dark btn-sm flex-grow-1">
+                      Guardar partida
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetFormPartida()">
+                      Nueva
+                    </button>
+                  </div>
+
+                  <small class="text-muted d-block mt-2">
+                    Plantillas incluidas:
+                    <ul class="mb-0 ps-3">
+                      <li>Venta gravada al contado: Caja / Bancos vs Ventas gravadas + IVA débito.</li>
+                      <li>Compra gravada al crédito: Inventarios/Gasto + Crédito fiscal vs Proveedores.</li>
+                      <li>Gasto administrativo con IVA: Gasto + Crédito fiscal vs Caja/Bancos.</li>
+                    </ul>
+                  </small>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- LISTA PARTIDAS + DETALLE -->
+          <div class="col-lg-7">
+            <div class="card mb-3">
+              <div class="card-body">
+                <div class="section-title">📑 Partidas registradas</div>
+                <div class="section-subtitle">
+                  Selecciona una partida para ver el detalle de sus líneas.  
+                  Ideal como borrador previo al registro en tu sistema contable formal.
+                </div>
+
+                <div class="table-responsive" style="max-height:260px;">
+                  <table class="table table-hover align-middle mb-2">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Glosa</th>
+                        <th>Total Debe</th>
+                        <th>Total Haber</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="tablaPartidas"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-body">
+                <div class="section-title">🔎 Detalle de partida seleccionada</div>
+                <div class="section-subtitle">
+                  Solo visualización. Si necesitas corregir, borra la partida y vuelve a registrarla.
+                </div>
+
+                <div class="table-responsive" style="max-height:260px;">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Cuenta</th>
+                        <th>Detalle</th>
+                        <th>Debe</th>
+                        <th>Haber</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tablaDetallePartida"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div> <!-- /col-7 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ======== VARIABLES GLOBALES ========
+    let cuentas = [];
+    let partidas = [];
+
+    // ======== STORAGE ========
+    function cargarDesdeStorage(clave) {
+      try {
+        const data = localStorage.getItem(clave);
+        return data ? JSON.parse(data) : [];
+      } catch (e) {
+        console.warn("Error leyendo", clave, e);
+        return [];
+      }
+    }
+
+    function guardarStorage() {
+      localStorage.setItem("catalogoCuentas", JSON.stringify(cuentas));
+      localStorage.setItem("partidasContables", JSON.stringify(partidas));
+    }
+
+    // ======== DASHBOARD ========
+    function renderDashboard() {
+      const totalCuentas = cuentas.length;
+      const activas = cuentas.filter(c => c.estado === "Activa").length;
+      const inactivas = totalCuentas - activas;
+
+      document.getElementById("dashTotalCuentas").textContent = totalCuentas;
+      document.getElementById("dashCuentasActivas").textContent = activas;
+      document.getElementById("dashCuentasInactivas").textContent = inactivas;
+
+      const totalPartidas = partidas.length;
+      document.getElementById("dashTotalPartidas").textContent = totalPartidas;
+
+      const hoy = new Date();
+      const mesActual = hoy.getMonth() + 1;
+      const anioActual = hoy.getFullYear();
+      const partidasMes = partidas.filter(p => {
+        const f = new Date(p.fecha + "T00:00:00");
+        return f.getMonth() + 1 === mesActual && f.getFullYear() === anioActual;
+      }).length;
+      document.getElementById("dashPartidasMes").textContent = partidasMes;
+    }
+
+    // ======== CATÁLOGO DE CUENTAS ========
+    function resetFormCuenta() {
+      const form = document.getElementById("formCuenta");
+      form.reset();
+      document.getElementById("ctaIndex").value = "";
+      document.getElementById("cta_tipo").value = "Activo";
+      document.getElementById("cta_estado").value = "Activa";
+    }
+
+    function renderCuentas() {
+      const tbody = document.getElementById("tablaCuentas");
+      tbody.innerHTML = "";
+
+      cuentas.forEach((c, i) => {
+        const estadoClass = c.estado === "Activa" ? "chip chip-activo" : "chip chip-inactivo";
+        tbody.innerHTML += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${c.codigo}</td>
+            <td>${c.nombre}</td>
+            <td>${c.tipo}</td>
+            <td><span class="${estadoClass}">${c.estado}</span></td>
+            <td class="text-end">
+              <button class="btn btn-outline-dark btn-sm" onclick="editarCuenta(${i})">Editar</button>
+              <button class="btn btn-outline-danger btn-sm" onclick="eliminarCuenta(${i})">Borrar</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      if (!cuentas.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center text-muted">
+              Aún no hay cuentas registradas. Puedes empezar creando las cuentas básicas de Activo, Pasivo, Patrimonio, Ingresos y Gastos.
+            </td>
+          </tr>
+        `;
+      }
+
+      renderDashboard();
+    }
+
+    function editarCuenta(i) {
+      const c = cuentas[i];
+      document.getElementById("ctaIndex").value = i;
+      document.getElementById("cta_codigo").value = c.codigo;
+      document.getElementById("cta_nombre").value = c.nombre;
+      document.getElementById("cta_tipo").value = c.tipo;
+      document.getElementById("cta_descripcion").value = c.descripcion;
+      document.getElementById("cta_estado").value = c.estado;
+    }
+
+    function eliminarCuenta(i) {
+      if (!confirm("¿Seguro que deseas eliminar esta cuenta del catálogo?")) return;
+      cuentas.splice(i, 1);
+      guardarStorage();
+      renderCuentas();
+    }
+
+    // ======== LÍNEAS DE PARTIDA ========
+    function agregarLinea(cuenta = "", detalle = "", debe = "", haber = "") {
+      const tbody = document.getElementById("tbodyLineas");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <input type="text" class="form-control form-control-sm cuenta" placeholder="Ej. 1101 Caja" value="${cuenta}">
+        </td>
+        <td>
+          <input type="text" class="form-control form-control-sm detalle" value="${detalle}">
+        </td>
+        <td>
+          <input type="number" step="0.01" class="form-control form-control-sm debe" value="${debe}" oninput="recalcularSumas()">
+        </td>
+        <td>
+          <input type="number" step="0.01" class="form-control form-control-sm haber" value="${haber}" oninput="recalcularSumas()">
+        </td>
+        <td class="text-end">
+          <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('tr').remove();recalcularSumas();">
+            ✕
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+      recalcularSumas();
+    }
+
+    function limpiarLineas() {
+      document.getElementById("tbodyLineas").innerHTML = "";
+      recalcularSumas();
+    }
+
+    function recalcularSumas() {
+      let sumDebe = 0;
+      let sumHaber = 0;
+      document.querySelectorAll("#tbodyLineas tr").forEach(tr => {
+        const d = parseFloat(tr.querySelector(".debe").value) || 0;
+        const h = parseFloat(tr.querySelector(".haber").value) || 0;
+        sumDebe += d;
+        sumHaber += h;
+      });
+      document.getElementById("sumDebe").textContent = sumDebe.toFixed(2);
+      document.getElementById("sumHaber").textContent = sumHaber.toFixed(2);
+    }
+
+    // ======== PLANTILLAS TRIBUTARIAS ========
+    const TASA_IVA = 0.13;
+
+    function aplicarPlantilla() {
+      const tipo = document.getElementById("par_tipo").value;
+      const montoBase = parseFloat(document.getElementById("par_montoBase").value) || 0;
+
+      if (montoBase <= 0) {
+        alert("Ingresa un monto base (sin IVA) mayor que cero para aplicar la plantilla.");
+        return;
+      }
+
+      const iva = +(montoBase * TASA_IVA).toFixed(2);
+      const total = +(montoBase + iva).toFixed(2);
+
+      limpiarLineas();
+
+      if (tipo === "Venta gravada (IVA 13%)") {
+        // Venta al contado: Caja / Bancos vs Ventas + IVA Débito
+        agregarLinea("1101 Caja", "Cobro de venta gravada", total, 0);
+        agregarLinea("4101 Ventas gravadas locales", "Registro de ingreso por venta", 0, montoBase);
+        agregarLinea("2131 IVA Débito fiscal", "IVA débito por venta", 0, iva);
+      } else if (tipo === "Compra gravada (IVA 13%)") {
+        // Compra al crédito: Inventario + Crédito fiscal vs Proveedores
+        agregarLinea("1105 Inventarios", "Compra gravada", montoBase, 0);
+        agregarLinea("1131 Crédito fiscal IVA", "Crédito fiscal por compra", iva, 0);
+        agregarLinea("2101 Proveedores", "Registro de obligación con proveedor", 0, total);
+      } else if (tipo === "Gasto con IVA (administrativo)") {
+        // Gasto administrativo con IVA al contado: Gasto + Crédito fiscal vs Caja/Bancos
+        agregarLinea("5102 Gastos administrativos", "Gasto administrativo", montoBase, 0);
+        agregarLinea("1131 Crédito fiscal IVA", "Crédito fiscal por gasto", iva, 0);
+        agregarLinea("1101 Caja", "Pago de gasto administrativo", 0, total);
+      } else {
+        alert("La plantilla seleccionada es 'General'. Ingresa las líneas de forma manual.");
+      }
+    }
+
+    // ======== PARTIDAS ========
+    function resetFormPartida() {
+      const form = document.getElementById("formPartida");
+      form.reset();
+      document.getElementById("par_tipo").value = "General";
+      document.getElementById("par_montoBase").value = "";
+      limpiarLineas();
+      // Crear algunas líneas vacías por defecto
+      agregarLinea();
+      agregarLinea();
+    }
+
+    function guardarPartida(event) {
+      event.preventDefault();
+
+      const fecha = document.getElementById("par_fecha").value;
+      const glosa = document.getElementById("par_glosa").value.trim();
+      const tipo = document.getElementById("par_tipo").value;
+
+      if (!fecha || !glosa) {
+        alert("Completa la fecha y la glosa de la partida.");
+        return;
+      }
+
+      const lineas = [];
+      let sumDebe = 0;
+      let sumHaber = 0;
+
+      const filas = document.querySelectorAll("#tbodyLineas tr");
+      filas.forEach(tr => {
+        const cuenta = tr.querySelector(".cuenta").value.trim();
+        const detalle = tr.querySelector(".detalle").value.trim();
+        const debe = parseFloat(tr.querySelector(".debe").value) || 0;
+        const haber = parseFloat(tr.querySelector(".haber").value) || 0;
+
+        if (!cuenta && debe === 0 && haber === 0) {
+          return; // línea vacía
+        }
+
+        if (debe > 0 && haber > 0) {
+          throw new Error("Una línea no puede tener valores en Debe y Haber al mismo tiempo.");
+        }
+
+        lineas.push({ cuenta, detalle, debe, haber });
+        sumDebe += debe;
+        sumHaber += haber;
+      });
+
+      if (!lineas.length) {
+        alert("Agrega al menos una línea con importe en Debe o Haber.");
+        return;
+      }
+
+      // Validación de doble partida
+      if (sumDebe.toFixed(2) !== sumHaber.toFixed(2)) {
+        alert("La partida no está cuadrada. Debe ($" + sumDebe.toFixed(2) + ") es diferente de Haber ($" + sumHaber.toFixed(2) + ").");
+        return;
+      }
+
+      const partida = {
+        id: Date.now(),
+        fecha,
+        glosa,
+        tipo,
+        totalDebe: sumDebe,
+        totalHaber: sumHaber,
+        lineas
+      };
+
+      partidas.push(partida);
+      guardarStorage();
+      renderPartidas();
+      resetFormPartida();
+    }
+
+    function renderPartidas() {
+      const tbody = document.getElementById("tablaPartidas");
+      tbody.innerHTML = "";
+
+      partidas.forEach((p, i) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${p.fecha}</td>
+            <td>${p.tipo}</td>
+            <td>${p.glosa}</td>
+            <td>$${p.totalDebe.toFixed(2)}</td>
+            <td>$${p.totalHaber.toFixed(2)}</td>
+            <td class="text-end">
+              <button class="btn btn-outline-dark btn-sm" onclick="verPartida(${i})">Ver</button>
+              <button class="btn btn-outline-danger btn-sm" onclick="eliminarPartida(${i})">Borrar</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      if (!partidas.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="text-center text-muted">
+              Aún no hay partidas registradas.
+            </td>
+          </tr>
+        `;
+      }
+
+      renderDashboard();
+    }
+
+    function verPartida(index) {
+      const p = partidas[index];
+      const tbody = document.getElementById("tablaDetallePartida");
+      tbody.innerHTML = "";
+
+      p.lineas.forEach(l => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${l.cuenta}</td>
+            <td>${l.detalle}</td>
+            <td>$${(l.debe || 0).toFixed(2)}</td>
+            <td>$${(l.haber || 0).toFixed(2)}</td>
+          </tr>
+        `;
+      });
+
+      if (!p.lineas.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="text-center text-muted">
+              Sin líneas para mostrar.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function eliminarPartida(index) {
+      if (!confirm("¿Seguro que deseas eliminar esta partida contable?")) return;
+      partidas.splice(index, 1);
+      guardarStorage();
+      renderPartidas();
+      // limpiar detalle si ya no hay partidas
+      if (!partidas.length) {
+        document.getElementById("tablaDetallePartida").innerHTML = `
+          <tr>
+            <td colspan="4" class="text-center text-muted">
+              Sin partida seleccionada.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // ======== INIT ========
+    window.addEventListener("DOMContentLoaded", () => {
+      // Cargar datos
+      cuentas = cargarDesdeStorage("catalogoCuentas");
+      partidas = cargarDesdeStorage("partidasContables");
+
+      // Si no hay cuentas, creamos algunas sugeridas
+      if (!cuentas.length) {
+        cuentas = [
+          { codigo: "1101", nombre: "Caja", tipo: "Activo", descripcion: "Efectivo disponible", estado: "Activa" },
+          { codigo: "1102", nombre: "Bancos", tipo: "Activo", descripcion: "Cuentas bancarias", estado: "Activa" },
+          { codigo: "1105", nombre: "Inventarios", tipo: "Activo", descripcion: "Mercaderías para la venta", estado: "Activa" },
+          { codigo: "1131", nombre: "Crédito fiscal IVA", tipo: "Activo", descripcion: "IVA acreditable en compras", estado: "Activa" },
+          { codigo: "2101", nombre: "Proveedores", tipo: "Pasivo", descripcion: "Cuentas por pagar a proveedores", estado: "Activa" },
+          { codigo: "2131", nombre: "IVA por pagar / débito fiscal", tipo: "Pasivo", descripcion: "IVA trasladado en ventas", estado: "Activa" },
+          { codigo: "4101", nombre: "Ventas gravadas locales", tipo: "Ingreso", descripcion: "Ingresos por ventas gravadas", estado: "Activa" },
+          { codigo: "5101", nombre: "Costo de ventas", tipo: "Gasto", descripcion: "Costo de las mercaderías vendidas", estado: "Activa" },
+          { codigo: "5102", nombre: "Gastos administrativos", tipo: "Gasto", descripcion: "Gastos de administración", estado: "Activa" }
+        ];
+      }
+
+      // Eventos formulario cuentas
+      const formCuenta = document.getElementById("formCuenta");
+      formCuenta.addEventListener("submit", e => {
+        e.preventDefault();
+        const idx = document.getElementById("ctaIndex").value;
+
+        const cuenta = {
+          codigo: document.getElementById("cta_codigo").value.trim(),
+          nombre: document.getElementById("cta_nombre").value.trim(),
+          tipo: document.getElementById("cta_tipo").value,
+          descripcion: document.getElementById("cta_descripcion").value.trim(),
+          estado: document.getElementById("cta_estado").value
+        };
+
+        if (!cuenta.codigo || !cuenta.nombre) {
+          alert("Ingresa el código y el nombre de la cuenta.");
+          return;
+        }
+
+        if (idx === "") {
+          cuentas.push(cuenta);
+        } else {
+          cuentas[parseInt(idx, 10)] = cuenta;
+        }
+
+        guardarStorage();
+        renderCuentas();
+        resetFormCuenta();
+      });
+
+      // Render inicial
+      renderCuentas();
+      renderPartidas();
+
+      // Inicializar tabla de detalle sin selección
+      document.getElementById("tablaDetallePartida").innerHTML = `
+        <tr>
+          <td colspan="4" class="text-center text-muted">
+            Sin partida seleccionada.
+          </td>
+        </tr>
+      `;
+
+      // Preparar formulario de partida
+      resetFormPartida();
+    });
+  </script>
+</body>
+</html>
